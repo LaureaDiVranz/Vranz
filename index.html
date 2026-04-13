@@ -19,28 +19,27 @@
       background: black;
     }
 
-    #tap {
-      position: absolute;
+    #overlay {
+      position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
+      background: black;
+      color: white;
       display: flex;
       justify-content: center;
       align-items: center;
-      color: white;
-      font-size: 20px;
       font-family: sans-serif;
-      background: black;
-      z-index: 10;
-      cursor: pointer;
+      font-size: 20px;
+      z-index: 999;
     }
   </style>
 </head>
 
 <body>
 
-<div id="tap">Tocca per avviare il video</div>
+<div id="overlay">TOCCA PER AVVIARE</div>
 
 <video id="video" loop playsinline>
   <source src="video.mp4" type="video/mp4">
@@ -48,18 +47,33 @@
 
 <script>
   const video = document.getElementById("video");
-  const tap = document.getElementById("tap");
+  const overlay = document.getElementById("overlay");
 
-  tap.addEventListener("click", async () => {
-    tap.style.display = "none";
-
-    try {
-      await video.requestFullscreen();
-    } catch (e) {}
+  function startVideo() {
+    overlay.style.display = "none";
 
     video.muted = false;
-    video.play();
-  });
+
+    const playPromise = video.play();
+
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // fallback: se autoplay audio è bloccato
+        video.muted = true;
+        video.play();
+      });
+    }
+
+    // fullscreen dentro il gesto utente (IMPORTANTISSIMO)
+    if (video.requestFullscreen) {
+      video.requestFullscreen().catch(() => {});
+    } else if (video.webkitEnterFullscreen) {
+      video.webkitEnterFullscreen(); // iPhone
+    }
+  }
+
+  overlay.addEventListener("click", startVideo);
+  overlay.addEventListener("touchstart", startVideo);
 </script>
 
 </body>
